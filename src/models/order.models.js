@@ -23,11 +23,7 @@ const orderSchema = model.Schema({
   orderItems:{
     type:[oredrItemsSchema]
   },
-  address:{
-    type:String,
-    required: true,
-    lowercase: true
-  },
+  
   status:{
     type:String,
     enum:["PENDING","CANCELLED","DELIVERED"],//giving choices
