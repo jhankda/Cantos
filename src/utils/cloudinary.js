@@ -1,16 +1,14 @@
-import {v2 as cloudinary} from 'cloudinary';
-import fs from 'fs';
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+// import { url } from "inspector";
 
 
-console.log(cloudinary.config(
-    {
-        secure:true
-    }
-).cloud_name);
-console.log("--------------------")
 
 
-const uploadOnCloudinary  = async (localFilePath ) => {
+console.log(cloudinary.config().cloud_name)
+
+
+const uploadOnCloudinary = async (localFilePath ) => {
 
     try {
         const result  = await cloudinary.uploader.upload(localFilePath,{resource_type:"auto"});

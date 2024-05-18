@@ -26,7 +26,8 @@ const userSchema = new mongoose.Schema({
   password:{
     type:String,
     required:true,
-    lowercase: true,
+    length:60,
+
   },
   refreshToken:{
     type:String,
@@ -34,21 +35,28 @@ const userSchema = new mongoose.Schema({
   },
   
 
-  
-
 },{timestamps:true})
 
 
 
-userSchema.pre("save", async function(next) {
+userSchema.pre("validate", async function(next) {
   if(!(this.isModified("password"))) return next();
+  console.log(this.password)
 
-  this.password = bcrypt.hash(this.password, 10)
+  const testpass = await  bcrypt.hash(this.password, 10)
+
+  console.log(testpass)
+  console.log(typeof testpass)
+  this.password=testpass
   next()
 })
 
-userSchema.methods.verifyPassword  = async function(password){
+userSchema.methods.compareThisPassword  = async function(password){
+  console.log(this.password)
+
   return await bcrypt.compare(password,this.password)
+ 
+
 }
 
 userSchema.methods.generateAccessToken  = function(){
