@@ -17,13 +17,14 @@ import { TokenSheet, newLoginSheet } from '../emailTemplate/OTPverifiaction.js';
 
 
 
-const GenrateAccessAndRefreshTokens = async (userId) => {
+const GenrateAccessAndRefreshTokens = async(userId) => {
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
+        console.log(accessToken)
 
         return { accessToken, refreshToken }
 
@@ -178,22 +179,13 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     const { accessToken, refreshToken } = await GenrateAccessAndRefreshTokens(existedUser._id)
+    console.log(accessToken)
+    console.log(refreshToken)
 
 
     const loggedInUser = await User.findById(existedUser._Id).select("-password -refreshToken")
 
-    
-    
-    
-    
     sendMail(email,"Cantos: New User Login",`Hi ${existedUser.firstName} ${existedUser.lastName}, You have logged in from ${source}`,newLoginSheet(existedUser.firstName,os,platform,browser))
-
-    
-
-
-
-
-
 
 
     const options = {
@@ -214,5 +206,21 @@ const loginUser = asyncHandler(async (req, res) => {
 
 })
 
+const updateUser = asyncHandler(async(req,res)=> {
+    const {firstName,middleName,lastName} = req.body
 
-export { createUser, registerUser ,loginUser}
+    const updatedUser  = await User.findByIdAndUpdate(req.user._id,{
+        firstName,
+        middleName,
+        lastName
+    },{new:true}
+    )
+
+
+    res
+    .status(200)
+    .json(new ApiResponse(200,"User updated",updatedUser))
+})
+
+
+export { createUser, registerUser ,loginUser, updateUser}
