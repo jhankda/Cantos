@@ -27,7 +27,7 @@ const loginAttemptsSchema = new mongoose.Schema({
         required:true,
         default:Date.now
     },
-},{timestamps:true})
+})
 
 loginAttemptsSchema.plugin(mongooseAggregatePaginate)
 

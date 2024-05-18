@@ -9,7 +9,7 @@ import bcrypt from 'bcrypt'
 import cryptoRandomString from 'crypto-random-string';
 import { sendMail } from '../utils/sendMail.js';
 import { TokenSheet, newLoginSheet } from '../emailTemplate/OTPverifiaction.js';
-
+import jwt from 'jsonwebtoken'
 // import { transporter } from '../app.js';
 // import { SMTPClient } from 'emailjs';
 
@@ -17,14 +17,14 @@ import { TokenSheet, newLoginSheet } from '../emailTemplate/OTPverifiaction.js';
 
 
 
-const GenrateAccessAndRefreshTokens = async(userId) => {
+const GenrateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
-        console.log(accessToken)
+        
 
         return { accessToken, refreshToken }
 
@@ -121,10 +121,10 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!createdUser) {
         throw new ApiError(404, "User not found")
     }
-    
-    const options  ={
-        httpOnly:true,
-        secure:true
+
+    const options = {
+        httpOnly: true,
+        secure: true
     }
 
 
@@ -139,8 +139,8 @@ const registerUser = asyncHandler(async (req, res) => {
         .clearCookie("password", options)
         .clearCookie("lastName", options)
         .clearCookie("hashToken", options)
-        
-        
+
+
         .json(new ApiResponse(201, "User created", createUser))
 
 })
@@ -149,15 +149,14 @@ const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body
     const { os, platform, source, version, browser } = req.useragent
 
-    console.log(email, password)
 
     if (!email && !password) {
         throw new ApiError(400, "All fields are required")
     }
 
 
-    const existedUser = await User.findOne({email})
-  
+    const existedUser = await User.findOne({ email })
+
     if (!existedUser) {
         throw new ApiError(404, "User not found")
     }
@@ -172,20 +171,19 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
     const isMatch = await existedUser.compareThisPassword(password)
-    console.log(isMatch)
     if (!isMatch) {
         await loginAttempts.updateOne({ loginTry: false })
         throw new ApiError(401, "Invalid credentials")
     }
 
     const { accessToken, refreshToken } = await GenrateAccessAndRefreshTokens(existedUser._id)
-    console.log(accessToken)
-    console.log(refreshToken)
+
+    
 
 
-    const loggedInUser = await User.findById(existedUser._Id).select("-password -refreshToken")
+    const loggedInUser = await User.findById(existedUser._Id).select("-password ")
 
-    sendMail(email,"Cantos: New User Login",`Hi ${existedUser.firstName} ${existedUser.lastName}, You have logged in from ${source}`,newLoginSheet(existedUser.firstName,os,platform,browser))
+    sendMail(email, "Cantos: New User Login", `Hi ${existedUser.firstName} ${existedUser.lastName}, You have logged in from ${source}`, newLoginSheet(existedUser.firstName, os, platform, browser))
 
 
     const options = {
@@ -206,21 +204,118 @@ const loginUser = asyncHandler(async (req, res) => {
 
 })
 
-const updateUser = asyncHandler(async(req,res)=> {
-    const {firstName,middleName,lastName} = req.body
+const updateUser = asyncHandler(async (req, res) => {
+    const { firstName, middleName, lastName } = req.body
 
-    const updatedUser  = await User.findByIdAndUpdate(req.user._id,{
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, {
         firstName,
         middleName,
         lastName
-    },{new:true}
+    }, { new: true }
     )
 
 
     res
-    .status(200)
-    .json(new ApiResponse(200,"User updated",updatedUser))
+        .status(200)
+        .json(new ApiResponse(200, "User updated", updatedUser))
 })
 
 
-export { createUser, registerUser ,loginUser, updateUser}
+const updatePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body
+    console.log(oldPassword)
+
+    if (!oldPassword && !newPassword) {
+        throw new ApiError(400, "All fields are required")
+    }
+
+    const user = await User.findById(req.user._id)
+
+    const isMatch = await user.compareThisPassword(oldPassword)
+    if (!isMatch) {
+        throw new ApiError(401, "Invalid credentials")
+    }
+
+    const updatedPassword = await User.findByIdAndUpdate(user._id, {
+        password: await bcrypt.hash(newPassword,10)
+    }, { new: true }).select("password")
+
+
+    
+
+    res
+        .status(200)
+        .json(new ApiResponse(200, "Password updated", updatedPassword))
+})
+const logoutUser = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(req.user._id, {
+        $unset: {
+            refreshToken: 1
+        }
+    }, { new: true })
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, "User logged out"))
+})
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized")
+    }
+
+    const decodedToken = await jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+    const user = await User.findById(decodedToken?._id)
+    console.log(user.firstName)
+
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+    
+    if (user.refreshToken !== incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized")
+    }
+
+    const { accessToken, refreshToken } = await GenrateAccessAndRefreshTokens(user._id)
+
+    // await User.findByIdAndUpdate(user._id, { refreshToken }, { new: true })
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+
+
+    res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new ApiResponse(200, "Token refreshed"))
+
+})
+
+
+
+
+
+
+export {
+    createUser,
+    registerUser,
+    loginUser,
+    updateUser,
+    updatePassword,
+    logoutUser,
+    refreshAccessToken
+}

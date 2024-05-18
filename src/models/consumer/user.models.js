@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   password:{
     type:String,
     required:true,
-    length:60,
+    length:80,
 
   },
   refreshToken:{
@@ -41,18 +41,17 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("validate", async function(next) {
   if(!(this.isModified("password"))) return next();
-  console.log(this.password)
+  
+  this.password= await bcrypt.hash(this.password, 10);
 
-  const testpass = await  bcrypt.hash(this.password, 10)
-
-  console.log(testpass)
-  console.log(typeof testpass)
-  this.password=testpass
-  next()
-})
+  
+ 
+  
+  next();
+});
 
 userSchema.methods.compareThisPassword  = async function(password){
-  console.log(this.password)
+ 
 
   return await bcrypt.compare(password,this.password)
  
