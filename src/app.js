@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser'
 
 import VerifyEmailRouter from './routes/verifyEmail.routes.js'
+import VendorRouter from './routes/vendorRouter.routes.js'
 
 
 
@@ -34,6 +35,7 @@ app.use(cors({
 
 
 app.use('/api/v1/User',VerifyEmailRouter)
+app.use('/api/v1/Vendor',VendorRouter)
 
 
 export {app};

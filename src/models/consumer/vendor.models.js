@@ -35,34 +35,38 @@ const vendorSchema = new mongoose.Schema({
     password:{
         type:String,
         required:true,
-        lowercase:true
-    }
+        length:80
+    },
+    email:{
+        type:String,
+        required:true,
+        unique:true
+    },
  
 
     }
 ,{timestamps:true})
 
-vendorSchema.pre("save", async function(next){
-    if(!(this.ismodified("password"))) return next();
+vendorSchema.pre("validate", async function(next){
+    if(!(this.isModified("password"))) return next();
 
-    this.password = bcrypt.hash(this.password, 12)
+    this.password = await bcrypt.hash(this.password, 12)
 
 })
 
 
 
 vendorSchema.methods.verifyPassword = async function(password){
-    return bcrypt.compare(password,this.password)
+    return await  bcrypt.compare(password,this.password)
 }
 
 vendorSchema.methods.generateAccessToken = function(){
-    jwt.sign(
+    return jwt.sign(
         {
             _id:this._id,
             companyCode:this.companyCode,
             name:this.name,
-
-        }.
+        },
         process.env.VENDOR_ACCESS_TOKEN_SECRET,
         {expiresIn:process.env.VENDOR_ACCESS_TOKEN_EXPIRY}
     )

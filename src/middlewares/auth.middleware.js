@@ -20,8 +20,29 @@ export const verifyJWT  = asyncHandler(async(req,_,next) => {
         throw new ApiError(401,error?.messagae || "Unauthorized")
     }
 
+})
+
+import {Vendor} from '../models/consumer/vendor.models.js'
+
+export const Authenticate  = asyncHandler(async(req,_,next) => {
+    try {
+        const token  = req.cookies?.accessToken  ||req.header("Authorization")?.replace("Bearer ","")
+        if (!token){
+            throw new ApiError(401,"Unauthorized")
+        }
+        console.log(token)
 
 
+        console.log(1)
+        const decoded = jwt.verify(token, process.env.VENDOR_ACCESS_TOKEN_SECRET)
+        console.log(decoded)
 
+        const vendor = await Vendor.findById(decoded?._id).select("-password")
+        req.vendor = vendor
+        
+        next()
+    } catch (error) {
+        throw new ApiError(401,error?.messagae || "Unauthorized")
+    }
 
 })

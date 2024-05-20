@@ -304,6 +304,35 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Token refreshed"))
 
 })
+const loginHistory = asyncHandler(async (req,res) => {
+    const user = req.user
+
+    const loginHistory  = await LoginAttempts.aggregate(
+        [
+            {
+              $match: {
+                'customerId':new mongoose.Types.ObjectId(user._id)
+              }
+            }, {
+              $sort: {
+                'loginTime': -1
+              }
+            }, {
+              $project: {
+                'loginTime': 1, 
+                'browser': 1, 
+                'os': 1, 
+                'loginTry': 1
+              }
+            }
+          ]
+    )
+
+
+    res
+    .status(200)
+    .json(new ApiResponse(200,"Login history",loginHistory))
+})
 
 
 
@@ -317,5 +346,6 @@ export {
     updateUser,
     updatePassword,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    loginHistory
 }
