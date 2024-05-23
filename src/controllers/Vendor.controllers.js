@@ -15,9 +15,7 @@ import jwt from 'jsonwebtoken'
 const generateTheAccessToken = async (vendorId) => {
     try {
         const vendor  = await Vendor.findById(vendorId)
-        console.log(1)
         const accessToken  =  vendor.generateAccessToken()
-        console.log(2)
         return accessToken
     } catch (error) {
         throw new ApiError(500,"Failed to generate token")
