@@ -79,4 +79,6 @@ const newProductCategory = asyncHandler(async(req,res) => {
 
 
 
+
+
 export {uploadproduct , newProductCategory} 
