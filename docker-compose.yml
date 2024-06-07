@@ -1,15 +1,17 @@
-version: '3.8'
-
 services:
   app:
     build: .
     ports:
       - "5555:5555"
+    volumes:
+      - .:/app
+      - /app/node_modules
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     environment:
       MONGODB_URL: "mongodb+srv://harshjhankda200988:comic20098@cluster1.2jbsuyz.mongodb.net"
-
+    command: ["npm", "run", "dev"]
 
   mongo:
     image: mongo:4.4
@@ -17,6 +19,12 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mongo-data:
