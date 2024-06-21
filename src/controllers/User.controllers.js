@@ -10,6 +10,7 @@ import cryptoRandomString from 'crypto-random-string';
 import { sendMail } from '../utils/sendMail.js';
 import { TokenSheet, newLoginSheet } from '../emailTemplate/OTPverifiaction.js';
 import jwt from 'jsonwebtoken'
+import { addOperationinQ} from '../producer.js';
 // import { transporter } from '../app.js';
 // import { SMTPClient } from 'emailjs';
 
@@ -50,9 +51,9 @@ const createUser = asyncHandler(async (req, res) => {
         console.log("All fields are filled")
     }
 
-    const existedUser = await User.findOne({
-        email
-    })
+    
+
+    const existedUser  = await addOperationinQ("USER0","FINDONE","User",{email})
 
     if (existedUser) {
         throw new ApiError(409, "User already exists")
@@ -106,21 +107,24 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
 
-    const createUser = await User.create({
+    const userdata = {
         firstName: req.cookies.firstName,
         middleName: req.cookies.middleName,
         lastName: req.cookies.lastName,
         email: req.cookies.email,
         password: req.cookies.password,
 
-    })
-
-
-    const createdUser = await User.findById(createUser._id).select("-password")
-
-    if (!createdUser) {
-        throw new ApiError(404, "User not found")
     }
+
+    const createUser  = await addOperationinQ("USER0","CREATE","User",userdata).then((data)=>{return data})
+
+
+    console.log("createUser",createUser)
+
+    
+
+  
+    
 
     const options = {
         httpOnly: true,
@@ -155,7 +159,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
 
-    const existedUser = await User.findOne({ email })
+    const existedUser = await addOperationinQ("USER0","FINDONE","User",{email})
 
     if (!existedUser) {
         throw new ApiError(404, "User not found")
@@ -220,7 +224,6 @@ const updateUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, "User updated", updatedUser))
 })
 
-
 const updatePassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body
     console.log(oldPassword)
@@ -247,6 +250,7 @@ const updatePassword = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, "Password updated", updatedPassword))
 })
+
 const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, {
         $unset: {
@@ -304,6 +308,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Token refreshed"))
 
 })
+
 const loginHistory = asyncHandler(async (req,res) => {
     const user = req.user
 
@@ -333,9 +338,6 @@ const loginHistory = asyncHandler(async (req,res) => {
     .status(200)
     .json(new ApiResponse(200,"Login history",loginHistory))
 })
-
-
-
 
 
 

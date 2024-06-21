@@ -76,7 +76,18 @@ const newProductCategory = asyncHandler(async(req,res) => {
     .json(new ApiResponse(200, 'Product category created successfully', {name, code, parentCode, description}))
 })
 
+const updateProduct  = asyncHandler(async(req,res) => {
+    
 
+})
+
+
+
+
+// would get back on it soon...
+const getProductSuggestions  = asyncHandler(async(req,res)=> {
+    const {search} = req.query
+})
 
 
 

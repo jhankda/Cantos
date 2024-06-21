@@ -1,11 +1,15 @@
 import connectDB from "./db/index.js";
 import dotenv from "dotenv";
 import {app} from "./app.js";
+import { handleResponse } from "./producer.js";
+
 
 
 dotenv.config({
     path:'./env'
 })
+
+handleResponse()
 
 connectDB()
 .then(()=>{
@@ -16,3 +20,4 @@ connectDB()
 .catch((err) => {
     console.log('Error connecting to the database', err)
 })
+

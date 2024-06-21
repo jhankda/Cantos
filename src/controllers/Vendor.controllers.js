@@ -204,6 +204,8 @@ const changeCurrentPassword =  asyncHandler(async(req,res) => {
     .status(200)
     .json(new ApiResponse(200,"Password updated"))
 })
+
+
 const loginHistory  =  asyncHandler(async(req,res) => {
     
     const vendor  = req.vendor
