@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./eCommerce
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./eCommerce:/app
+      - /app/node_modules
+      - map-data:/app/map-data
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      MONGODB_URL: "mongodb+srv://harshjhankda200988:comic20098@cluster1.2jbsuyz.mongodb.net"
+      REDIS_URL: "redis://redis:6379"
+    command: ["npm", "run", "dev"]
+  
+  dbworker:
+    build:
+      context: ./DB-WORKER
+    volumes:
+      - ./DB-WORKER:/app
+      - /app/node_modules
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      MONGODB_URL: "mongodb+srv://harshjhankda200988:comic20098@cluster1.2jbsuyz.mongodb.net"
+      REDIS_URL: "redis://redis:6379"
+    command: ["npm", "run", "dev"]
+     
+  mongo:
+    image: mongo:4.4
+    ports:
+      - "27017:27017"
+    volumes:
+      - eCommerce-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      
+  redis:
+    image: "redis:6.0"
+    container_name: "redis"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data    
+      
+volumes:
+  eCommerce-mongo-data:  # Renamed to avoid duplication
+  redis-data:
+  map-data:
+
