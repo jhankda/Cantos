@@ -49,18 +49,25 @@ userSchema.pre("validate", async function(next) {
   
   next();
 });
-
+ 
 userSchema.methods.compareThisPassword  = async function(password){
- 
 
-  return await bcrypt.compare(password,this.password)
- 
+  console.log("SCHEMA FUNCTION METHHOD")
+  console.log(typeof password,typeof this.password)
 
+  try {
+    const value  = await bcrypt.compare(password,this.password)
+    console.log(value)
+    return value;
+  } catch (error) {
+    console.log("ERROR IN THE FUNCTION",error)
+    
+  } 
 }
-
+ 
 userSchema.methods.generateAccessToken  = function(){
   return jwt.sign(
-    {
+    { 
       _id:this._id,
       firstName:this.firstName,
       lastName:this.lastName,

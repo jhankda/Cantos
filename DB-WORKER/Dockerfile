@@ -1,5 +1,5 @@
 
-FROM node:20
+FROM node:21-alpine
 
 
 WORKDIR /app
@@ -8,12 +8,13 @@ WORKDIR /app
 COPY package*.json ./
 
 
-RUN npm install
+
 
 
 COPY . .
 COPY .env .env
 
+RUN npm install
 
 CMD ["npm", "run", "dev"]
 

@@ -1,7 +1,8 @@
 import connectDB from "./db/index.js";
 import dotenv from 'dotenv';
 import { createClient,  } from 'redis';
-import { creation, ifexists, ifexistsById } from "./src/index.js";
+import { comparePass, creation, getAccessToken, getRefreshToken, ifexists, ifexistsById, updateById, updateOne, verifyAccessToken } from "./src/index.js";
+import { DBerror } from "./utils/DBerror.js";
 
 dotenv.config({
     path: './env'
@@ -10,7 +11,8 @@ connectDB();
 
 
 const client = createClient({
-	url:"redis://redis:6379"}); 
+    url:"redis://redis:6379"
+}); 
 
 async function DBPickup() {
       try {
@@ -36,9 +38,27 @@ async function DBPickup() {
                     case "FINDBYID":
                         result  = await ifexistsById(data);
                         break;
+                    case "COMPARE_PASS": 
+                        result = await comparePass(data);
+                        break;
+                    case "UPDATEONE":
+                        result = await updateOne(data);
+                        break;
+                    case "GENRATE-ACCESS-TOKEN":
+                        result  = await getAccessToken(data);
+                        break;
+                    case "GENRATE-REFRESH-TOKEN":
+                        result = await getRefreshToken(data);
+                        break;
+                    case "VERIFY-ACCESS-TOKEN":
+                        result = await verifyAccessToken(data);
+                        break;
+                    case "UPDATEBYID":
+                        result = await updateById(data);
+                        break;
                     default:
                         console.log("Invalid action");
-                        result = "Invalid action";
+                        throw new DBerror(500, "Invalid action");
                         break;
                 }
                 const operationId = data.operationId
@@ -47,7 +67,7 @@ async function DBPickup() {
                 console.log(`\n DB ALPHA has processed the data: ${JSON.stringify(data)}`); 
                 client.lPush('Results', JSON.stringify({ operationId, result }));
             } catch (error) {
-                console.error('Error processing the data', error);
+                console.error('Error in processing the data', error);
                 client.lPush('Results', JSON.stringify({ operationId, error: error.message }));
             }
         } 

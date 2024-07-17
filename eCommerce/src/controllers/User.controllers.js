@@ -164,28 +164,34 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!existedUser) {
         throw new ApiError(404, "User not found")
     }
-
-
-    const loginAttempts = await LoginAttempts.create({
+    const  logindata = {
         customerId: new mongoose.Types.ObjectId(existedUser._id),
         os,
         browser,
         loginTime: Date.now()
-    })
+        }
 
-
-    const isMatch = await existedUser.compareThisPassword(password)
-    if (!isMatch) {
-        await loginAttempts.updateOne({ loginTry: false })
-        throw new ApiError(401, "Invalid credentials")
-    }
-
-    const { accessToken, refreshToken } = await GenrateAccessAndRefreshTokens(existedUser._id)
+    const loginAttempts = await addOperationinQ("USER0","CREATE","LoginAttempts",logindata) 
 
     
 
 
-    const loggedInUser = await User.findById(existedUser._Id).select("-password ")
+    const isMatch = await addOperationinQ("USER0","COMPARE_PASS","User",{email:email,password:password});
+
+
+    console.log(isMatch)
+    if (!isMatch) {
+        await addOperationinQ(existedUser._id,"UPDATEONE","LoginAttempts",{loginTime:Date.now(),loginTry:false})
+        throw new ApiError(401, "Invalid credentials")
+    }
+
+    const accessToken = await addOperationinQ(existedUser._id,"GENRATE-ACCESS-TOKEN","User",{})
+    const refreshToken = await addOperationinQ(existedUser._id,"GENRATE-REFRESH-TOKEN","User",{})
+
+        
+
+
+    const loggedInUser = await addOperationinQ("USER0","FINDBYID","User",{uniqueId:existedUser._id})
 
     sendMail(email, "Cantos: New User Login", `Hi ${existedUser.firstName} ${existedUser.lastName}, You have logged in from ${source}`, newLoginSheet(existedUser.firstName, os, platform, browser))
 
@@ -211,12 +217,8 @@ const loginUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
     const { firstName, middleName, lastName } = req.body
 
-    const updatedUser = await User.findByIdAndUpdate(req.user._id, {
-        firstName,
-        middleName,
-        lastName
-    }, { new: true }
-    )
+    const updatedUser = await addOperationinQ(req.user._id,"UPDATEBYID","User",{firstName,middleName,lastName})
+    
 
 
     res

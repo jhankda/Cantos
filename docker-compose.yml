@@ -15,9 +15,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    environment:
-      MONGODB_URL: "mongodb+srv://harshjhankda200988:comic20098@cluster1.2jbsuyz.mongodb.net"
-      REDIS_URL: "redis://redis:6379"
     command: ["npm", "run", "dev"]
   
   dbworker:
