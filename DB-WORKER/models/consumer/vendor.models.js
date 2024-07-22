@@ -56,7 +56,7 @@ vendorSchema.pre("validate", async function(next){
 
 
 
-vendorSchema.methods.verifyPassword = async function(password){
+vendorSchema.methods.compareThisPassword = async function(password){
     return await  bcrypt.compare(password,this.password)
 }
 

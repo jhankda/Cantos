@@ -11,6 +11,7 @@ import cryptoRandomString from 'crypto-random-string';
 import { sendMail } from '../utils/sendMail.js';
 import { TokenSheet, newLoginSheet } from '../emailTemplate/OTPverifiaction.js';
 import jwt from 'jsonwebtoken'
+import { addOperationinQ } from '../producer.js';
 
 const generateTheAccessToken = async (vendorId) => {
     try {
@@ -30,8 +31,8 @@ const createVendor = asyncHandler(async(req,res) => {
         throw new ApiError(400,"All fields are required")
     }
 
-    const existedUser = await User.findOne({email})
-    if(!(existedUser)){
+    const existedUser = await addOperationinQ("VENDOR0","FIND","Vendor",{email})
+    if(existedUser){
         throw new ApiError(409,"User already exists")
     }
 
@@ -61,7 +62,6 @@ const registerVendor =asyncHandler(async(req,res) => {
     
     const {token} = req.params
     const hashToken = req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "")
-    console.log(token,hashToken)
 
     if(!hashToken || !token){
         throw new ApiError(400,"Invalid token")
@@ -73,7 +73,7 @@ const registerVendor =asyncHandler(async(req,res) => {
         throw new ApiError(401,"Unauthorized")
     }
 
-    const createdVendor  = await Vendor.create({
+    const data  = {
         companyCode:req.cookies.companyCode,
         name:req.cookies.name,
         description:req.cookies.description,
@@ -82,12 +82,11 @@ const registerVendor =asyncHandler(async(req,res) => {
         city:req.cookies.city,
         password:req.cookies.password,
         email:req.cookies.email
-    })
-
-    const vendor  = await Vendor.findById(createdVendor._id).select("-password")
-    if(!vendor){
-        throw new ApiError(404,"Vendor not found")
     }
+
+    const createVendor = await addOperationinQ("VENDOR0","CREATE","Vendor",data)
+
+    
     
 
     const options  = {
@@ -112,25 +111,24 @@ const loginVendor  =  asyncHandler(async(req,res) => {
     
     }
 
-    const existedVendor = await Vendor.findOne({email})
-    if(!existedVendor){
-        throw new ApiError(404,"User not found")
-    }
+    const existedVendor = await addOperationinQ("VENDOR0","FINDONE","Vendor",{email})
+    
 
-    const loginAttempts = await LoginAttempts.create({
+    const loginAttempts = await addOperationinQ("VENDOR0","CREATE","LoginAttempts",{
         customerId: new mongoose.Types.ObjectId(existedVendor._id),
         os,
         browser,
         loginTime: Date.now()
     })
-
-    const isMatch  = await existedVendor.verifyPassword(password)
+    
+    const isMatch  = await addOperationinQ("VENDOR0","COMPARE_PASS","Vendor",{email:email,password:password});
     if(!isMatch){
+        await addOperationinQ(loginAttempts._id,"UPDATEBYID","LoginAttempts",{loginTry:false})
         throw new ApiError(401,"Invalid credentials")
     }
-    const accessToken  = await generateTheAccessToken(existedVendor._id)
+    const accessToken  = await addOperationinQ(existedVendor._id,"GENRATE-ACCESS-TOKEN","Vendor",{})
 
-    const loggedInVendor  = await Vendor.findById(existedVendor._id).select("-password")
+    const loggedInVendor  = await addOperationinQ("USER0","FINDBYID","Vendor",{uniqueId:existedVendor._id})
 
     sendMail(email, "Cantos: New Login", `Greetings ${existedVendor.name} , You have logged in from ${source}`, newLoginSheet(existedVendor.name, os, platform, browser))
 
@@ -162,7 +160,7 @@ const logoutVendor  =  asyncHandler(async(req,res) =>{
 const updateDetails = asyncHandler(async(req,res) => {
     const {name, description, postalAddress, country, city} = req.body
 
-    const vendor = await Vendor.findByIdAndUpdate(req.vendor._id,
+    const vendor = await addOperationinQ(req.vendor._id,"UPDATEBYID","Vendor",
         {
             name,
             description,
@@ -170,7 +168,7 @@ const updateDetails = asyncHandler(async(req,res) => {
             country,
             city
 
-        },{new:true})
+        })
 
     
         res
@@ -186,16 +184,15 @@ const changeCurrentPassword =  asyncHandler(async(req,res) => {
         throw new ApiError(400,"Old password and new password are required")
     }
 
-    const vendor = await Vendor.findById(req.vendor._id)
 
-    const isMatch = await vendor.verifyPassword(oldPassword)
+    const isMatch = await addOperationinQ(req.vendor._id,"COMPARE_PASS","Vendor",{password:oldPassword})
     if(!isMatch){
         throw new ApiError(401,"Invalid credentials")
     }
 
-    const upatedPassword = await Vendor.findByIdAndUpdate(vendor._id,{
+    const upatedPassword = await addOperationinQ(req.vendor._id,"UPDATEBYID","Vendor",{
         password:await bcrypt.hash(newPassword, 12)
-    },{new:true}).select("-passsword")
+    })
 
 
 
@@ -208,12 +205,11 @@ const changeCurrentPassword =  asyncHandler(async(req,res) => {
 
 const loginHistory  =  asyncHandler(async(req,res) => {
     
-    const vendor  = req.vendor
-    const loginHistory = await LoginAttempts.aggregate(
+    const loginHistory = await addOperationinQ("customerId","AGGREGATE","LoginAttempts",
         [
             {
               $match: {
-                'customerId':new mongoose.Types.ObjectId(vendor._id)
+                'customerId':new mongoose.Types.ObjectId(req.vendor._id)
               }
             }, {
               $sort: {
