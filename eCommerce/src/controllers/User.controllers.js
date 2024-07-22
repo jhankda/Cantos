@@ -18,28 +18,12 @@ import { addOperationinQ} from '../producer.js';
 
 
 
-const GenrateAccessAndRefreshTokens = async (userId) => {
-    try {
-        const user = await User.findById(userId)
-        const accessToken = user.generateAccessToken()
-        const refreshToken = user.generateRefreshToken()
-        user.refreshToken = refreshToken
-        await user.save({ validateBeforeSave: false })
-        
 
-        return { accessToken, refreshToken }
-
-
-    } catch (error) {
-        throw new ApiError(500, "Failed to generate tokens")
-    }
-}
 
 
 const createUser = asyncHandler(async (req, res) => {
 
     const { firstName, middleName, lastName, email, password } = req.body
-    console.log(email)
 
     if (
         [firstName, email, lastName, password].some((field) =>
@@ -51,8 +35,6 @@ const createUser = asyncHandler(async (req, res) => {
         console.log("All fields are filled")
     }
 
-    
-
     const existedUser  = await addOperationinQ("USER0","FINDONE","User",{email})
 
     if (existedUser) {
@@ -62,11 +44,7 @@ const createUser = asyncHandler(async (req, res) => {
     const token = await cryptoRandomString({ length: 6, type: 'distinguishable' });
     const hashToken = await bcrypt.hash(token, 10)
 
-
     sendMail(email, "Welcome to Our Ecommerce project", ` Hi ${firstName} ${lastName}, Your token is ${token} `, TokenSheet(firstName, token))
-
-
-
 
     const options = {
         httpOnly: true,
@@ -91,8 +69,6 @@ const registerUser = asyncHandler(async (req, res) => {
     const { token } = req.params
     const hashToken = req.cookies?.hashToken || req.header("Authorization")?.replace("Bearer ", "")
 
-
-
     if (!hashToken) {
         throw new ApiError(401, "Unauthorized try again pasting token")
     }
@@ -101,9 +77,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (!decodedToken) {
         throw new ApiError(404, "User not found")
-
-
-
     }
 
 
@@ -117,23 +90,12 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const createUser  = await addOperationinQ("USER0","CREATE","User",userdata).then((data)=>{return data})
-
-
     console.log("createUser",createUser)
-
-    
-
-  
-    
 
     const options = {
         httpOnly: true,
         secure: true
     }
-
-
-
-
 
     res
         .status(201)
@@ -161,9 +123,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const existedUser = await addOperationinQ("USER0","FINDONE","User",{email})
 
-    if (!existedUser) {
-        throw new ApiError(404, "User not found")
-    }
     // const date = new Date()
     const  logindata = {
         customerId: new mongoose.Types.ObjectId(existedUser._id),
@@ -176,14 +135,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
     
 
-
+    
     const isMatch = await addOperationinQ("USER0","COMPARE_PASS","User",{email:email,password:password});
 
 
-    console.log(isMatch)
     if (!isMatch) {
         const updatedTRY = await addOperationinQ(loginAttempts._id,"UPDATEONE","LoginAttempts",{loginTime:Date.now(),loginTry:false})
-        console.log("OIOIOI",updatedTry)
         throw new ApiError(401, "Invalid credentials")
     }
 
@@ -226,7 +183,6 @@ const updateUser = asyncHandler(async (req, res) => {
 
 const updatePassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body
-    console.log(oldPassword)
 
     if (!oldPassword && !newPassword) {
         throw new ApiError(400, "All fields are required")
@@ -238,13 +194,9 @@ const updatePassword = asyncHandler(async (req, res) => {
     if (!isMatch) {
         throw new ApiError(401, "Invalid credentials")
     }
-    console.log("isMatch",isMatch)
 
     const updatedPassword = await addOperationinQ(req.user._id,"UPDATEBYID","User", {
         password: await bcrypt.hash(newPassword,10)})
-
-
-    
 
     res
         .status(200)
@@ -278,13 +230,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     const decodedToken = await addOperationinQ("USER0","VERIFY-REFRESH-TOKEN","User",{token:incomingRefreshToken})
-
-    
-    console.log(decodedToken.firstName)
-
-    if (!decodedToken) {
-        throw new ApiError(404, "User not found")
-    }
     
     if (decodedToken.refreshToken !== incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized")
@@ -292,14 +237,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const accessToken = await addOperationinQ(decodedToken._id,"GENRATE-ACCESS-TOKEN","User",{})
     const refreshToken = await addOperationinQ(decodedToken._id,"GENRATE-REFRESH-TOKEN","User",{})
-    // await User.findByIdAndUpdate(user._id, { refreshToken }, { new: true })
 
     const options = {
         httpOnly: true,
         secure: true
     }
-
-
 
     res
     .status(200)

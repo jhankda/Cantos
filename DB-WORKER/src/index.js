@@ -72,7 +72,7 @@ const comparePass = asyncHandler(async (data) => {
                 return verifyPassword;
             }
             else {
-                return new DBerror(500, "Password not matched");
+                return false;
             }
 
         } catch (error) {
