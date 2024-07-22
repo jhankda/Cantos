@@ -21,6 +21,25 @@ const ifexists = asyncHandler(async (data) => {
     }
 })
 
+const find = asyncHandler(async (data) => {
+    try {
+        const Model = modelsMap[data.Model];
+        let checkModel
+        if (data.userId == false || data.userId == "USER0" || data.userId == "VENDOR0"){
+        checkModel = await Model.findOne(data.body);
+        }else{
+            checkModel = await Model.findById(data.userId);
+        }
+        return checkModel;
+    } catch (error) {   
+        return new DBerror(500, "Error in finding process:",error)
+    }
+})
+
+        
+            
+
+
 const ifexistsById = asyncHandler(async (data) => {
     try {
         const Model = modelsMap[data.Model];
@@ -58,7 +77,7 @@ const comparePass = asyncHandler(async (data) => {
     try {
         let Model = modelsMap[data.Model];
         let existedUser;
-        if (data.userId == "USER0") {
+        if (data.userId == false || data.userId == "USER0" || data.userId == "VENDOR0") {
             existedUser = await Model.findOne({ email: data.body.email });
         } else {
             existedUser = await Model.findById(data.userId);
@@ -213,4 +232,4 @@ const convertKeysToObjectId = (obj, keys) => {
 
 
 
-export { creation, ifexists, ifexistsById, comparePass, updateById, updateOne, getAccessToken, getRefreshToken, verifyAccessToken, verifyRefreshToken, aggregationLine }
+export {find, creation, ifexists, ifexistsById, comparePass, updateById, updateOne, getAccessToken, getRefreshToken, verifyAccessToken, verifyRefreshToken, aggregationLine }

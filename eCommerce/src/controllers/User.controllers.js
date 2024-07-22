@@ -35,7 +35,7 @@ const createUser = asyncHandler(async (req, res) => {
         console.log("All fields are filled")
     }
 
-    const existedUser  = await addOperationinQ("USER0","FINDONE","User",{email})
+    const existedUser  = await addOperationinQ("USER0","FIND","User",{email})
 
     if (existedUser) {
         throw new ApiError(409, "User already exists")

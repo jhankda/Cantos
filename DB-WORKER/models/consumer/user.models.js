@@ -60,7 +60,7 @@ userSchema.methods.compareThisPassword  = async function(password){
     console.log(value)
     return value;
   } catch (error) {
-    console.log("ERROR IN THE FUNCTION",error)
+    console.log("ERROR IN THE ComparePasswordMethod FUNCTION",error)
     
   } 
 }
