@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import {v4 as uuidv4} from "uuid";
+import { ApiError } from "./utils/ApiError.js";
 
 const client1  = createClient({
     url:"redis://redis:6379"
@@ -23,6 +24,8 @@ export function addOperationinQ(userId, Action, Model, body){
         console.log(data)
         client1.lPush('Submissions', data);
         console.log("Safe check 1")
+
+
         return new Promise((resolve, reject)=> {
             pendingOperation.set(operationId, {resolve, reject}
             )
@@ -32,7 +35,8 @@ export function addOperationinQ(userId, Action, Model, body){
 
     } catch (error) {
         console.error("ERROR in sending operation data",error)
-        
+        throw new ApiError(error,"Unexpected Error", 400)
+        return Promise.reject(error);
     }
 
 }
@@ -62,17 +66,20 @@ export async function handleResponse(){
                 console.log("mapped operation ID in pending Operations:", operationId)
                 const{ resolve,reject} = pendingOperation.get(operationId)
                 if(error){
-                    reject(error)
-                }
+                    // throw new ApiError(400,error)
+                    reject(new Error(error));
+
+                } 
                 else{
                     resolve(result)
                 }
                 pendingOperation.delete(operationId)
             }
+            
             handleResponse()
         }
         catch(err){
-            console.log("Error occured while parsing data",err)
+            console.error("ERROR while recieving Data",err.message)
         }})
 
     

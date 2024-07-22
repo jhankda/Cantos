@@ -68,10 +68,14 @@ async function DBPickup() {
                         break;
                 }
                 const operationId = data.operationId
-
-
-                console.log(`\n DB ALPHA has processed the data: ${JSON.stringify(data)}`); 
-                client.lPush('Results', JSON.stringify({ operationId, result }));
+                if(result instanceof DBerror){
+                    console.error(`Error processing data:`,result);
+                    client.lPush('Results', JSON.stringify({ operationId, error: result.message, code: result.statusCode }));
+                }
+                else{ 
+                    console.log(`\n DB ALPHA has processed the data: ${JSON.stringify(data)}`); 
+                    client.lPush('Results', JSON.stringify({ operationId, result }));
+                }
             } catch (error) {
                 console.error('Error in processing the data', error);
                 client.lPush('Results', JSON.stringify({ operationId, error: error.message }));

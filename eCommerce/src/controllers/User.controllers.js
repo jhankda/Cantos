@@ -183,7 +183,7 @@ const loginUser = asyncHandler(async (req, res) => {
     console.log(isMatch)
     if (!isMatch) {
         const updatedTRY = await addOperationinQ(loginAttempts._id,"UPDATEONE","LoginAttempts",{loginTime:Date.now(),loginTry:false})
-        console.log("AAAAAAAAAAAAAAH",updatedTRY)
+        console.log("OIOIOI",updatedTry)
         throw new ApiError(401, "Invalid credentials")
     }
 
@@ -196,7 +196,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const loggedInUser = await addOperationinQ("USER0","FINDBYID","User",{uniqueId:existedUser._id})
 
     sendMail(email, "Cantos: New User Login", `Hi ${existedUser.firstName} ${existedUser.lastName}, You have logged in from ${source}`, newLoginSheet(existedUser.firstName, os, platform, browser))
-
+    
 
     const options = {
         httpOnly: true,
