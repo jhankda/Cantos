@@ -1,7 +1,7 @@
 import connectDB from "./db/index.js";
 import dotenv from 'dotenv';
 import { createClient,  } from 'redis';
-import { comparePass, creation, getAccessToken, getRefreshToken, ifexists, ifexistsById, updateById, updateOne, verifyAccessToken } from "./src/index.js";
+import { aggregationLine, comparePass, creation, getAccessToken, getRefreshToken, ifexists, ifexistsById, updateById, updateOne, verifyAccessToken, verifyRefreshToken } from "./src/index.js";
 import { DBerror } from "./utils/DBerror.js";
 
 dotenv.config({
@@ -53,8 +53,14 @@ async function DBPickup() {
                     case "VERIFY-ACCESS-TOKEN":
                         result = await verifyAccessToken(data);
                         break;
+                    case "VERIFY-REFRESH-TOKEN":
+                        result = await verifyRefreshToken(data);
+                        break;
                     case "UPDATEBYID":
                         result = await updateById(data);
+                        break;
+                    case "AGGREGATE":
+                        result = await aggregationLine(data);
                         break;
                     default:
                         console.log("Invalid action");

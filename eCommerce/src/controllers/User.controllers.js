@@ -164,11 +164,12 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!existedUser) {
         throw new ApiError(404, "User not found")
     }
+    // const date = new Date()
     const  logindata = {
         customerId: new mongoose.Types.ObjectId(existedUser._id),
         os,
         browser,
-        loginTime: Date.now()
+        loginTime: new Date().toString()
         }
 
     const loginAttempts = await addOperationinQ("USER0","CREATE","LoginAttempts",logindata) 
@@ -181,7 +182,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
     console.log(isMatch)
     if (!isMatch) {
-        await addOperationinQ(existedUser._id,"UPDATEONE","LoginAttempts",{loginTime:Date.now(),loginTry:false})
+        const updatedTRY = await addOperationinQ(loginAttempts._id,"UPDATEONE","LoginAttempts",{loginTime:Date.now(),loginTry:false})
+        console.log("AAAAAAAAAAAAAAH",updatedTRY)
         throw new ApiError(401, "Invalid credentials")
     }
 
@@ -216,12 +218,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const updateUser = asyncHandler(async (req, res) => {
     const { firstName, middleName, lastName } = req.body
-
     const updatedUser = await addOperationinQ(req.user._id,"UPDATEBYID","User",{firstName,middleName,lastName})
-    
-
-
-    res
+        res
         .status(200)
         .json(new ApiResponse(200, "User updated", updatedUser))
 })
@@ -234,16 +232,16 @@ const updatePassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required")
     }
 
-    const user = await User.findById(req.user._id)
+   
 
-    const isMatch = await user.compareThisPassword(oldPassword)
+    const isMatch = await addOperationinQ(req.user._id,"COMPARE_PASS","User",{password:oldPassword})
     if (!isMatch) {
         throw new ApiError(401, "Invalid credentials")
     }
+    console.log("isMatch",isMatch)
 
-    const updatedPassword = await User.findByIdAndUpdate(user._id, {
-        password: await bcrypt.hash(newPassword,10)
-    }, { new: true }).select("password")
+    const updatedPassword = await addOperationinQ(req.user._id,"UPDATEBYID","User", {
+        password: await bcrypt.hash(newPassword,10)})
 
 
     
@@ -254,11 +252,11 @@ const updatePassword = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-    await User.findByIdAndUpdate(req.user._id, {
+    await addOperationinQ(req.user._id,"UPDATEBYID","User", {
         $unset: {
             refreshToken: 1
         }
-    }, { new: true })
+    })
 
     const options = {
         httpOnly: true,
@@ -279,21 +277,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Unauthorized")
     }
 
-    const decodedToken = await jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+    const decodedToken = await addOperationinQ("USER0","VERIFY-REFRESH-TOKEN","User",{token:incomingRefreshToken})
 
-    const user = await User.findById(decodedToken?._id)
-    console.log(user.firstName)
+    
+    console.log(decodedToken.firstName)
 
-    if (!user) {
+    if (!decodedToken) {
         throw new ApiError(404, "User not found")
     }
     
-    if (user.refreshToken !== incomingRefreshToken) {
+    if (decodedToken.refreshToken !== incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized")
     }
 
-    const { accessToken, refreshToken } = await GenrateAccessAndRefreshTokens(user._id)
-
+    const accessToken = await addOperationinQ(decodedToken._id,"GENRATE-ACCESS-TOKEN","User",{})
+    const refreshToken = await addOperationinQ(decodedToken._id,"GENRATE-REFRESH-TOKEN","User",{})
     // await User.findByIdAndUpdate(user._id, { refreshToken }, { new: true })
 
     const options = {
@@ -314,11 +312,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const loginHistory = asyncHandler(async (req,res) => {
     const user = req.user
 
-    const loginHistory  = await LoginAttempts.aggregate(
-        [
+    const loginHistory  = await addOperationinQ("customerId","AGGREGATE","LoginAttempts",
+         [
             {
               $match: {
-                'customerId':new mongoose.Types.ObjectId(user._id)
+                'customerId':new mongoose.Types.ObjectId(req.user._id)
               }
             }, {
               $sort: {
@@ -333,6 +331,7 @@ const loginHistory = asyncHandler(async (req,res) => {
               }
             }
           ]
+        
     )
 
 

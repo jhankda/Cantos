@@ -31,14 +31,14 @@ export function addOperationinQ(userId, Action, Model, body){
 
 
     } catch (error) {
-        console.error("THIS IS ERORRRRRRRRRRRR:",error)
+        console.error("ERROR in sending operation data",error)
         
     }
 
 }
 
 export async function handleResponse(){
-    console.log("handle response called")
+    console.log("handleResponse function called")
     await client2.brPop('Results', 0).then((data)=> {
         
         try{
