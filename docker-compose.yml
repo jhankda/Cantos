@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: ./eCommerce
+    image: comicgolem/app:latest
     ports:
       - "5555:5555"
     volumes:
@@ -18,8 +17,7 @@ services:
     command: ["npm", "run", "dev"]
   
   dbworker:
-    build:
-      context: ./DB-WORKER
+    image: comicgolem/dbworker:latest
     volumes:
       - ./DB-WORKER:/app
       - /app/node_modules

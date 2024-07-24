@@ -21,9 +21,9 @@ export function addOperationinQ(userId, Action, Model, body){
         const operationId  = uuidv4()
         const objectData  = {Action, Model, body, userId, operationId}
         const data = JSON.stringify(objectData)
-        console.log(data)
+        console.log("SENDING Data ::",data)
         client1.lPush('Submissions', data);
-        console.log("Safe check 1")
+        console.log("\n Data sent to redis")
 
 
         return new Promise((resolve, reject)=> {
@@ -46,20 +46,20 @@ export async function handleResponse(){
     await client2.brPop('Results', 0).then((data)=> {
         
         try{
-            console.log("RECIEVED DATA, value of data -->",data)
-            console.log("DATA TYPE:",typeof data)
+            console.log("RECIEVED DATA,")
+            
 
             const response = data.element
             const parseddata = JSON.parse(response)
 
-            console.log(typeof parseddata)
+            console.log("\nDATATYPE :: ",typeof data, "\nParsed Data :: ",parseddata)
             
 
             const { result , error } = parseddata
             const operationId = parseddata.operationId
-            console.log("operationId",operationId)
-            console.log("any error:",error)
-            console.log("result",result)
+            console.log("operationId :: ",operationId)
+            console.log("Error? :: ",error)
+            console.log("Result? :: ",result)
 
 
             if(pendingOperation.has(operationId)){
