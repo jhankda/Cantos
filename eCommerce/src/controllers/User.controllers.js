@@ -254,7 +254,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const loginHistory = asyncHandler(async (req,res) => {
     const user = req.user
 
-    const loginHistory  = await addOperationinQ("customerId","AGGREGATE","LoginAttempts",
+    const loginHistory  = await addOperationinQ("USER0","AGGREGATE","LoginAttempts",
          [
             {
               $match: {
@@ -272,7 +272,7 @@ const loginHistory = asyncHandler(async (req,res) => {
                 'loginTry': 1
               }
             }
-          ]
+          ],"customerId"
         
     )
 

@@ -205,7 +205,7 @@ const changeCurrentPassword =  asyncHandler(async(req,res) => {
 
 const loginHistory  =  asyncHandler(async(req,res) => {
     
-    const loginHistory = await addOperationinQ("customerId","AGGREGATE","LoginAttempts",
+    const loginHistory = await addOperationinQ("VENDOR0","AGGREGATE","LoginAttempts",
         [
             {
               $match: {
@@ -223,7 +223,7 @@ const loginHistory  =  asyncHandler(async(req,res) => {
                 'loginTry': 1
               }
             }
-          ]
+          ],"customerId"
     )
 
     res

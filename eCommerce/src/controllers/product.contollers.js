@@ -13,12 +13,14 @@ import jwt from 'jsonwebtoken'
 import { Product } from '../models/Product/product.models.js'
 import { uploadOnCloudinary} from '../utils/cloudinary.js'
 import { ProductCategory } from '../models/Product/category.models.js';
+import { addOperationinQ } from '../producer.js';
+import { ObjectId } from 'mongodb';
 
 
 
 const uploadproduct = asyncHandler(async(req,res) => {
-    const {name, sku, description, price} = req.body
-    const productImageLocalPath = req.file?.path 
+    const {name, sku, description, price , categoryId} = req.body
+    const productImageLocalPath = req.file?.path
 
     if([name,sku, description,price].some((field) => field?.trim() === '')){
         throw new ApiError(400, 'All fields are required')
@@ -32,13 +34,14 @@ const uploadproduct = asyncHandler(async(req,res) => {
     }
 
 
-    const newProduct = await Product.create({
+    const newProduct = await addOperationinQ("PRODUCT0","CREATE","Product",{
         name,
         sku,
         description,
         price,
-        productImage:uploadImage
-        
+        productImage: uploadImage,
+        vendorId: req.vendor.id,
+        categoryId: new mongoose.Types.ObjectId(categoryId)
     })
 
     if(!(newProduct)){
@@ -47,7 +50,6 @@ const uploadproduct = asyncHandler(async(req,res) => {
     }
 
 
- 
     res
     .status(200)
     .json(new ApiResponse(200, 'Product uploaded successfully', {name, sku, description, price}))
@@ -77,8 +79,16 @@ const newProductCategory = asyncHandler(async(req,res) => {
 })
 
 const updateProduct  = asyncHandler(async(req,res) => {
-    
+   
 
+})
+
+const getProductCategories  = asyncHandler(async(req,res) => {
+    const productCategories = await addOperationinQ("USER0","FIND","ProductCategory",{})
+
+    res
+    .status(200)
+    .json(new ApiResponse(200, 'Product categories fetched successfully', productCategories))
 })
 
 
@@ -92,4 +102,4 @@ const getProductSuggestions  = asyncHandler(async(req,res)=> {
 
 
 
-export {uploadproduct , newProductCategory} 
+export {uploadproduct , newProductCategory, getProductCategories} 

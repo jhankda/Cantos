@@ -25,11 +25,11 @@ const productSchema  = new mongoose.Schema({
         required:true
     },
     vendorId:{
-        type:mongoose.Schema.Types.ObjectId,
+        type:Schema.Types.ObjectId,
         ref:"Vendor",
     },
     categoryId:{
-        type:mongoose.Schema.Types.ObjectId,
+        type:Schema.Types.ObjectId,
         ref:"productCategory"
     }
     

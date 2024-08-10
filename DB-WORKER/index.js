@@ -1,7 +1,7 @@
 import connectDB from "./db/index.js";
 import dotenv from 'dotenv';
 import { createClient,  } from 'redis';
-import { aggregationLine, comparePass, creation, find, getAccessToken, getRefreshToken, ifexists, ifexistsById, updateById, updateOne, verifyAccessToken, verifyRefreshToken } from "./src/index.js";
+import { aggregationLine, comparePass, convertKeysToObjectId, creation, find, getAccessToken, getRefreshToken, ifexists, ifexistsById, updateById, updateOne, verifyAccessToken, verifyRefreshToken } from "./src/index.js";
 import { DBerror } from "./utils/DBerror.js";
 
 dotenv.config({
@@ -28,6 +28,7 @@ async function DBPickup() {
 
             try { 
                 let result;
+                data.mongoose_Object?convertKeysToObjectId(data.body,data.mongoose_Object):null;
                 switch (data.Action) {
                     case "CREATE":
                         result = await creation(data);

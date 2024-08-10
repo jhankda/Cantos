@@ -15,11 +15,11 @@ client1.connect()
 client2.connect()
 
 
-export function addOperationinQ(userId, Action, Model, body){
+export function addOperationinQ(userId, Action, Model, body,mongoose_Object = null){
     
     try {
         const operationId  = uuidv4()
-        const objectData  = {Action, Model, body, userId, operationId}
+        const objectData  = {Action, Model, body, userId, operationId, mongoose_Object}
         const data = JSON.stringify(objectData)
         console.log("SENDING Data ::",data)
         client1.lPush('Submissions', data);

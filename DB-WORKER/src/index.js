@@ -201,7 +201,6 @@ const updateById = asyncHandler(async (data) => {
 const aggregationLine = asyncHandler(async (data) => {
     try {
         const Model = modelsMap[data.Model];
-        convertKeysToObjectId(data.body, data.userId)
         const aggregatedPipeline = await Model.aggregate(data.body)
         return aggregatedPipeline;
     } catch (error) {
@@ -232,4 +231,4 @@ const convertKeysToObjectId = (obj, keys) => {
 
 
 
-export {find, creation, ifexists, ifexistsById, comparePass, updateById, updateOne, getAccessToken, getRefreshToken, verifyAccessToken, verifyRefreshToken, aggregationLine }
+export {find, creation, ifexists, ifexistsById, comparePass, updateById, updateOne, getAccessToken, getRefreshToken, verifyAccessToken, verifyRefreshToken, aggregationLine, convertKeysToObjectId}
