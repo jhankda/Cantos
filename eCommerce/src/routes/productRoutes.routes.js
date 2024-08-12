@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import { Authenticate, verifyJWT } from '../middlewares/auth.middleware.js';
-import { getProductCategories, newProductCategory, uploadproduct } from '../controllers/product.contollers.js';
+import { getCategoryTree, getProductCategories, newProductCategory, uploadproduct } from '../controllers/product.contollers.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { get } from 'mongoose';
 
@@ -13,5 +13,7 @@ router.route('/uploadProduct').post(Authenticate,
 router.route('/newCategory').post(Authenticate, newProductCategory);
 
 router.route('/getCategory').get(getProductCategories);
+
+router.route('/categoryTree').get(getCategoryTree)
 
 export default router; 

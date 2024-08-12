@@ -12,15 +12,14 @@ const productCategorySchema = new mongoose.Schema({
    },
    description:{
     type:String,
-
+    default:`get related products `
    },
    parentCode:{
     type:String,
-    required:true,
     lowercase:true
    }
   
-},{timestamps:true})
+})
 
 export const ProductCategory  = mongoose.model("ProductCategory",productCategorySchema)
 
