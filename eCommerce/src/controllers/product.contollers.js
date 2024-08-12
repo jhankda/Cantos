@@ -62,7 +62,7 @@ const newProductCategory = asyncHandler(async(req,res) => {
         throw new ApiError(400, 'All fields are required')
     }
 
-    const newProductCategory = await ProductCategory.create({
+    const newProductCategory = await addOperationinQ("PRODUCT", "CREATE", "ProductCategory", {
         name,
         code,
         parentCode,
@@ -83,8 +83,8 @@ const updateProduct  = asyncHandler(async(req,res) => {
 
 })
 
-const getProductCategories  = asyncHandler(async(req,res) => {
-    const productCategories = await addOperationinQ("USER0","FIND","ProductCategory",{})
+const getProductCategories = asyncHandler(async (req, res) => {
+    const productCategories = await addOperationinQ("VENDOR0", "FINDMANY", "ProductCategory", {})
 
     res
     .status(200)
@@ -93,6 +93,30 @@ const getProductCategories  = asyncHandler(async(req,res) => {
 
 
 
+const getCategoryTree = asyncHandler(async (req, res) => {
+    const categories = await addOperationinQ("USER0","FINDMANY","ProductCategory",{})
+    const categoryMap = {}
+
+    categories.forEach(category => {
+
+        categoryMap[category.code] = { ...category, subcategory:[]}
+    })
+
+    const categoryTree = []
+    categories.forEach(category => {
+        if(category.parentCode){
+            categoryMap[category.parentCode].subcategory.push(categoryMap[category.code]._id,categoryMap[category.code].name,categoryMap[category.code].subcategory)
+
+        }
+        else{
+            categoryTree.push(categoryMap[category.code]._id, categoryMap[category.code].name,categoryMap[category.code].subcategory)
+        }
+    })
+
+    res
+    .status(200)
+    .json(new ApiResponse(200,'Category tree fetched successfully',categoryTree))
+})
 
 // would get back on it soon...
 const getProductSuggestions  = asyncHandler(async(req,res)=> {
@@ -102,4 +126,4 @@ const getProductSuggestions  = asyncHandler(async(req,res)=> {
 
 
 
-export {uploadproduct , newProductCategory, getProductCategories} 
+export { uploadproduct, newProductCategory, getProductCategories,getCategoryTree, updateProduct, getProductSuggestions } 
