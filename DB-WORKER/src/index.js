@@ -55,6 +55,23 @@ const ifexistsById = asyncHandler(async (data) => {
     }
 })
 
+const findMany = asyncHandler(async (data) => {
+    try {
+        const Model = modelsMap[data.Model];
+        const checkModel = await Model.find(data.body);
+        if (checkModel) {
+            return checkModel;
+        }
+        else {
+            return new DBerror(500, "User Not Found ")
+        }
+    } catch (error) {
+        return new DBerror(500, "Error in finding process:",error)
+    }
+})
+
+
+
 const creation = asyncHandler(async (data) => {
     try {
         const Model = modelsMap[data.Model];
@@ -231,4 +248,4 @@ const convertKeysToObjectId = (obj, keys) => {
 
 
 
-export {find, creation, ifexists, ifexistsById, comparePass, updateById, updateOne, getAccessToken, getRefreshToken, verifyAccessToken, verifyRefreshToken, aggregationLine, convertKeysToObjectId}
+export {find, creation, ifexists, ifexistsById, comparePass, updateById, updateOne, getAccessToken, getRefreshToken, verifyAccessToken, verifyRefreshToken, aggregationLine, convertKeysToObjectId, findMany}

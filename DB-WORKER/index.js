@@ -1,7 +1,7 @@
 import connectDB from "./db/index.js";
 import dotenv from 'dotenv';
 import { createClient,  } from 'redis';
-import { aggregationLine, comparePass, convertKeysToObjectId, creation, find, getAccessToken, getRefreshToken, ifexists, ifexistsById, updateById, updateOne, verifyAccessToken, verifyRefreshToken } from "./src/index.js";
+import { aggregationLine, comparePass, convertKeysToObjectId, creation, find, findMany, getAccessToken, getRefreshToken, ifexists, ifexistsById, updateById, updateOne, verifyAccessToken, verifyRefreshToken } from "./src/index.js";
 import { DBerror } from "./utils/DBerror.js";
 
 dotenv.config({
@@ -41,6 +41,9 @@ async function DBPickup() {
                         break;
                     case "FINDBYID":
                         result  = await ifexistsById(data);
+                        break;
+                    case "FINDMANY":
+                        result = await findMany(data);
                         break;
                     case "COMPARE_PASS": 
                         result = await comparePass(data);
