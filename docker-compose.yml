@@ -1,14 +1,17 @@
 version: '3.8'
 
 services:
+
   app:
-    image: comicgolem/app:latest
+    build: 
+      context: ./eCommerce
+      dockerfile: Dockerfile
+    container_name: "eCommerce"
     ports:
       - "5555:5555"
     volumes:
-      - ./eCommerce:/app
-      - /app/node_modules
       - map-data:/app/map-data
+      - ./eCommerce:/app
     depends_on:
       mongo:
         condition: service_healthy
@@ -17,7 +20,10 @@ services:
     command: ["npm", "run", "dev"]
   
   dbworker:
-    image: comicgolem/dbworker:latest
+    build: 
+      context: ./DB-WORKER
+      dockerfile: Dockerfile
+    container_name: "DB-WORKER"
     volumes:
       - ./DB-WORKER:/app
       - /app/node_modules
@@ -26,10 +32,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    environment:
-      MONGODB_URL: "mongodb+srv://harshjhankda200988:comic20098@cluster1.2jbsuyz.mongodb.net"
-      REDIS_URL: "redis://redis:6379"
     command: ["npm", "run", "dev"]
+
+  search:
+    build:
+      context: ./Search
+    container_name: "Search"
+    ports:
+      - 4444:4444
+    volumes:
+      - ./Search:/app
+    depends_on:
+      - app
+    command: ["npm", "run", "dev"]
+    restart: on-failure
      
   mongo:
     image: mongo:4.4
