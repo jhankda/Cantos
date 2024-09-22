@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { searchsuggestion } from "../services/searchService.js";
+import { getProduct, searchsuggestion } from "../services/searchService.js";
 
 const router  = Router();
 
@@ -8,4 +8,5 @@ router.get('/',(req,res)=>{
 })
 
 router.route('/:queryField').get(searchsuggestion)
+router.route('/id/:queryfield').get(getProduct)
 export default router;
